@@ -1,26 +1,23 @@
 import streamlit as st
 import pandas as pd
+import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Google Sheets setup
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name('alc-dictionary-credentials.json', scopes=scope)
+credentials_info = json.loads(st.secrets["google_credentials"]["json"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_info, scopes=scope)
 client = gspread.authorize(credentials)
 
-# Open the main sheet (definitions) and the submissions sheet
-spreadsheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1B_09WvM16z_jJ8HAZxu-v09AZCm5-5gmVmBjX4qznK8/edit?usp=sharing")
+SHEET_ID = "1B_09WvM16z_jJ8HAZxu-v09AZCm5-5gmVmBjX4qznK8"
+spreadsheet = client.open_by_key(SHEET_ID)
 definitions_sheet = spreadsheet.sheet1
 submissions_sheet = spreadsheet.worksheet("Submissions")
 
-# Load data into a DataFrame
 data = pd.DataFrame(definitions_sheet.get_all_records())
 
-# Streamlit app
-st.set_page_config(page_title="ALC Dictionary", layout="centered")
 st.title("📘 ALC Dictionary")
 
-# Search bar
 query = st.text_input("Search for a term:")
 if query:
     results = data[data['Term'].str.contains(query, case=False, na=False)]
